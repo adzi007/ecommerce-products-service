@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1735832924205,
+      "tag": "0000_goofy_typhoid_mary",
+      "breakpoints": true
+    }
+  ]
+}
