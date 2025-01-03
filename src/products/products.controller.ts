@@ -1,5 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
+import { CreateProductDto } from './dto/create-product.dto';
+import { CreateProductPipe } from 'src/pipes/create-product.pipe';
 
 @Controller('products')
 export class ProductsController {
@@ -7,36 +9,12 @@ export class ProductsController {
     constructor(private readonly productsService: ProductsService) {}
 
     @Post()
-    async createProduct(@Body() product: any) {
+    @UsePipes(CreateProductPipe)
+    async createProduct(@Body(ValidationPipe) product: CreateProductDto) {
 
-        // console.log("product >>> ", product);
+        console.log("product >>>> ", product);
 
-        // return "test save product"
-        
-        // return this.productsService.createProduct(product);
-        // return this.productsService.createProduct({ 
-        //     name: product.name,
-        //     slug: product.slug,
-        //     description: product.description,
-        //     price_base: product.price_base,
-        //     price_sell: product.price_sell,
-        //     type: product.type,
-        //     image: product.image,
-        //     stock: product.stock,
-        //     category_id: product.category_id
-        //  });
-         
-         return this.productsService.createProduct({ 
-            name: "Indomie kari Original 240g",
-            slug: "indomie-kari-original-240g",
-            description: "lorem ipsum dolor sit amet",
-            priceSell:  2200,
-            priceBase:  2500,
-            type: "consumable",
-            image: "https://placehold.co/200",
-            stock: 24,
-            category_id: 1
-         });
+         return this.productsService.createProduct(product);
     }
 
     @Get()

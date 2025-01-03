@@ -6,7 +6,12 @@ import { eq } from 'drizzle-orm';
 @Injectable()
 export class CategoryService {
     async createCategory(category: any) {
-        return await db.insert(categoryTable).values(category).$returningId();
+        // return await db.insert(categoryTable).values(category).$returningId();
+        // return await db.insert(categoryTable).values(category).$returningId();
+        return await db.insert(categoryTable).values({
+            name:category.name,
+            slug:category.slug
+        }).$returningId();
     }
 
     async getAllCategories() {
