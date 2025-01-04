@@ -3,19 +3,8 @@ import { db } from 'src/db';
 import { productsTable, categoryTable } from 'drizzle/drizzle.schemas';
 import { desc, eq } from 'drizzle-orm';
 import { CreateProductDto } from './dto/create-product.dto';
-import { json } from 'drizzle-orm/mysql-core';
-// import * as schema from 'drizzle/drizzle.schemas';
-// import { drizzle } from 'drizzle-orm/mysql2';
-// import  DrizzleConfig  from 'drizzle.config'; 
 
 type ProductType = "consumable" | "non_consumable";
-
-// function toProductType(value: string): ProductType | undefined {
-//     if (value === "consumable" || value === "non_consumable") {
-//         return value as ProductType;
-//     }
-//     return undefined; // Return undefined if the value is not valid
-// }
 
 @Injectable()
 export class ProductsService { 
@@ -24,7 +13,6 @@ export class ProductsService {
 
         type NewProduct = typeof productsTable.$inferInsert;
 
-        // const productType = toProductType(product.type);
         const productType = product.type as ProductType;
 
         const produtInsert : NewProduct = {
@@ -53,8 +41,6 @@ export class ProductsService {
             slug: productsTable.slug,
             priceBase: productsTable.priceBase,
             priceSell: productsTable.priceSell,
-            // categoryName: categoryTable.name,
-            // categorySlug: categoryTable.slug,s
             category: {
                 name: categoryTable.name,
                 slug: categoryTable.slug
@@ -64,19 +50,7 @@ export class ProductsService {
           .limit(limit)
           .orderBy(desc(productsTable.id))
 
-        const totalProduct = await db.$count(productsTable);
-
-        // const products = await db.query.productsTable.findMany({
-        //     with:{
-        //         category:true
-        //     },
-        //     // limit,
-        //     // offset,
-        //     // orderBy: [desc(productsTable.id)]
-        // })
-
-        // console.log("products >>> ", products);
-        
+        const totalProduct = await db.$count(productsTable);    
 
         return {
             data: products,
@@ -87,17 +61,25 @@ export class ProductsService {
                 totalPages: Math.ceil( (totalProduct) / limit )
             }
         }
-
-        // return "coba coba"
-
-        // const result = await db.query.
     }
 
     async getProductById(id: number) {
 
-        // const db = drizzle({ schema });
-
-        return await db.select().from(productsTable).where(eq(productsTable.id,id));
+        return await db.select({
+            id: productsTable.id,
+            name: productsTable.name,
+            slug: productsTable.slug,
+            description: productsTable.description,
+            priceBase: productsTable.priceBase,
+            priceSell: productsTable.priceSell,
+            type: productsTable.type,
+            image: productsTable.image,
+            stock: productsTable.stock,
+            category: {
+                name: categoryTable.name,
+                slug: categoryTable.slug
+            }
+        }).from(productsTable).leftJoin(categoryTable, eq(productsTable.categoryId, categoryTable.id)).where(eq(productsTable.id,id));
     }
 
     async updateProduct(id: number, updates: any) {

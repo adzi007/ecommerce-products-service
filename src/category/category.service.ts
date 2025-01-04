@@ -17,29 +17,29 @@ export class CategoryService {
 
     async getAllCategories() {
 
-        // return await db.select().from(categoryTable);
-
-        // db.$
-
         const category = await db.select({
+            id: categoryTable.id,
             name: categoryTable.name,
-            slug: categoryTable.slug,
-            products: sql`
-                (
-                SELECT JSON_ARRAYAGG(
-                    JSON_OBJECT(
-                        'name', ${productsTable.name},
-                        'slug', ${productsTable.slug}
-                    )
-                ) as proooS
-                FROM products
-                WHERE products.category_id = category.id
-            )
-            `.mapWith(va => JSON.parse(va))
-        }).from(categoryTable)
+            slug: categoryTable.slug
+        }).from(categoryTable);
 
-        // console.log("category >>> ", category);
-        
+
+        // const category = await db.select({
+        //     name: categoryTable.name,
+        //     slug: categoryTable.slug,
+        //     products: sql`
+        //         (
+        //         SELECT JSON_ARRAYAGG(
+        //             JSON_OBJECT(
+        //                 'name', ${productsTable.name},
+        //                 'slug', ${productsTable.slug}
+        //             )
+        //         ) as proooS
+        //         FROM products
+        //         WHERE products.category_id = category.id
+        //     )
+        //     `.mapWith(va => JSON.parse(va))
+        // }).from(categoryTable)        
 
         return category
     }
