@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes, ValidationPi
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { CreateProductPipe } from 'src/pipes/create-product.pipe';
+import { Public, RoleMatchingMode, Roles } from 'nest-keycloak-connect';
 
 @Controller('products')
 export class ProductsController {
@@ -9,6 +10,7 @@ export class ProductsController {
     constructor(private readonly productsService: ProductsService) {}
 
     @Post()
+    @Roles({roles:['admin'], mode: RoleMatchingMode.ALL})
     @UsePipes(CreateProductPipe)
     async createProduct(@Body(ValidationPipe) product: CreateProductDto) {
 
@@ -18,21 +20,25 @@ export class ProductsController {
     }
 
     @Get()
+    @Public()
     async getAllProducts() {
         return this.productsService.getAllProducts();
     }
 
     @Get(":id")
+    @Public()
     async getProductById(@Param("id") id: number) {
         return this.productsService.getProductById(id);
     }
 
     @Put(":id")
+    @Roles({roles:['admin']})
     async updateProduct(@Param("id") id: number, @Body() updates: any) {
         return this.productsService.updateProduct(id, updates);
     }
 
     @Delete(":id")
+    @Roles({roles:['admin']})
     async deleteProduct(@Param("id") id: number) {
         return this.productsService.deleteProduct(id);
     }
