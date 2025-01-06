@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { CreateProductPipe } from 'src/pipes/create-product.pipe';
 import { Public, RoleMatchingMode, Roles } from 'nest-keycloak-connect';
+
 
 @Controller('products')
 export class ProductsController {
@@ -13,16 +14,16 @@ export class ProductsController {
     @Roles({roles:['admin'], mode: RoleMatchingMode.ALL})
     @UsePipes(CreateProductPipe)
     async createProduct(@Body(ValidationPipe) product: CreateProductDto) {
-
-        console.log("product >>>> ", product);
-
          return this.productsService.createProduct(product);
     }
 
     @Get()
     @Public()
-    async getAllProducts() {
-        return this.productsService.getAllProducts();
+    async getAllProducts(
+        @Query('page', ParseIntPipe) page: number = 1,
+        @Query('limit', ParseIntPipe) limit: number = 10,
+    ) {
+        return this.productsService.getAllProducts(page, limit);
     }
 
     @Get(":id")
