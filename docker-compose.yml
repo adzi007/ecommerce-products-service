@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce-products-service
+    networks:
+      - ecommerce-network
+    ports:
+      - '5001:3000'
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=3307
+      - DB_USER=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env 
+
+  db:
+    image: mysql:8
+    container_name: ecommerce-products-db
+    networks:
+      - ecommerce-network
+    restart: always
+    ports:
+      - '3307:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=qwerty888
+      - MYSQL_DATABASE=${DB_NAME}
+    volumes:
+      - db_dataproducts:/var/lib/mysql
+    env_file:
+      - .env 
+
+networks:
+  ecommerce-network:
+    external: true
+
+volumes:
+  db_dataproducts:
