@@ -27,7 +27,9 @@ export class ProductsService {
             stock: product.stock,
         }
 
-        return await db.insert(productsTable).values(produtInsert)
+        // return await db.insert(productsTable).values(produtInsert)
+
+        return "test protexted route"
 
     }
 
