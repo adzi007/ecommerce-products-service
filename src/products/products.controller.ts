@@ -30,7 +30,10 @@ export class ProductsController {
 
     @Get(":id")
     async getProductById(@Param("id") id: number) {
-        return this.productsService.getProductById(id);
+        const productById = await this.productsService.getProductById(id)
+        // console.log("productById >>> ", productById[0]);
+        // console.log("productById type >>> ", typeof productById);
+        return productById[0];
     }
 
     @Put(":id")

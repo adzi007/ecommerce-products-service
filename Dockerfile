@@ -12,11 +12,6 @@ RUN bun install
 # Copy the source code
 COPY . .
 
-# Build the project
-# Explicitly specify entrypoint
-# RUN bun build src/main.ts --outdir=dist
-# RUN bun run build
-
 RUN bun run build
 
 # Start production image

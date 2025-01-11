@@ -14,19 +14,18 @@ export class AuthorizationGuard implements CanActivate {
     const sourceHeader = request.headers['x-request-source'];
 
     if (sourceHeader === 'internal') {
-      console.log('Request came from an internal route via custom header');
+      // Request came from an internal route via custom header
       return true;
 
     }else{
 
-      // access from public
-
+      // Access from public
       const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
       
       if (!requiredRoles || requiredRoles.length === 0) {
 
-        console.log("No roles required for this route");
-        return true; // No roles required for this route
+        // No roles required for this route
+        return true; 
 
       }else{
 
@@ -34,16 +33,17 @@ export class AuthorizationGuard implements CanActivate {
 
         const userRoles = request.headers['x-user-roles'];
 
-        console.log("requiredRoles >>> ", requiredRoles);
-        console.log("userRoles >> ", userRoles);
-        
-        return true;
+        if(requiredRoles.includes(userRoles.toString())) {
+
+          return true;
+
+        }else{
+
+          return false;
+
+        }
 
       }
-
-
     }
-
-    // return true;
   }
 }
