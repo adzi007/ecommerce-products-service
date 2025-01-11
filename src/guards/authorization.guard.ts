@@ -34,6 +34,7 @@ export class AuthorizationGuard implements CanActivate {
 
         const userRoles = request.headers['x-user-roles'];
 
+        console.log("requiredRoles >>> ", requiredRoles);
         console.log("userRoles >> ", userRoles);
         
         return true;
