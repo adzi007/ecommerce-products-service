@@ -3,6 +3,7 @@ import { db } from 'src/db';
 import { productsTable, categoryTable } from 'drizzle/drizzle.schemas';
 import { desc, eq } from 'drizzle-orm';
 import { CreateProductDto } from './dto/create-product.dto';
+import { ValidateStockDto } from './dto/validate-stock.dto';
 
 type ProductType = "consumable" | "non_consumable";
 
@@ -27,9 +28,9 @@ export class ProductsService {
             stock: product.stock,
         }
 
-        // return await db.insert(productsTable).values(produtInsert)
+        return await db.insert(productsTable).values(produtInsert)
 
-        return "test protexted route"
+        // return "test protexted route"
 
     }
 
@@ -93,6 +94,13 @@ export class ProductsService {
 
     async deleteProduct(id: number) {
         return await db.delete(productsTable).where(eq(productsTable.id,id))
+    }
+
+    async validateStockProducts (productIds: number[]) {
+
+        console.log("productIds service >>> ", productIds);
+        
+
     }
 
 }

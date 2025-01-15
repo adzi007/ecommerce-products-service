@@ -4,6 +4,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { CreateProductPipe } from 'src/pipes/create-product.pipe';
 import { Roles } from 'src/decorators/roles.decorator';
 import { AuthorizationGuard } from 'src/guards/authorization.guard';
+import { ValidateStockDto } from './dto/validate-stock.dto';
+import { ValidateStockPipe } from 'src/pipes/validate-stock.pipe';
 // import { Public, RoleMatchingMode, Roles } from 'nest-keycloak-connect';
 
 
@@ -47,4 +49,15 @@ export class ProductsController {
     async deleteProduct(@Param("id") id: number) {
         return this.productsService.deleteProduct(id);
     }
+
+    @Post("/validate-stock")
+    async validateStockProducts(@Body('productIds', ValidateStockPipe) productIds: number[] ) {
+
+        console.log("productsIds controller >>> ", productIds);
+        console.log("productsIds controller length >>> ", productIds.length);
+        
+        return this.productsService.validateStockProducts(productIds)
+    }
+
+    
 }
