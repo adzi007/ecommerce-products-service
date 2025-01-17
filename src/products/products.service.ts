@@ -1,14 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { db } from 'src/db';
 import { productsTable, categoryTable } from 'drizzle/drizzle.schemas';
 import { desc, eq } from 'drizzle-orm';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ValidateStockDto } from './dto/validate-stock.dto';
+import { RedisService } from 'src/redis/redis.service';
 
 type ProductType = "consumable" | "non_consumable";
 
 @Injectable()
 export class ProductsService { 
+
+    // constructor(private readonly redisService: RedisService) {}
+    constructor(
+        @Inject(RedisService) 
+        private readonly redisService: RedisService 
+      ) {}
 
     async createProduct(product: CreateProductDto) {        
 
@@ -68,7 +75,14 @@ export class ProductsService {
 
     async getProductById(id: number) {
 
-        return await db.select({
+        const cachedData = await this.redisService.get('product-detail-'+id);
+
+        if (cachedData) {
+            // console.log('Data retrieved from Redis');
+            return cachedData;
+        }
+
+        const data = await db.select({
             id: productsTable.id,
             name: productsTable.name,
             slug: productsTable.slug,
@@ -83,6 +97,11 @@ export class ProductsService {
                 slug: categoryTable.slug
             }
         }).from(productsTable).leftJoin(categoryTable, eq(productsTable.categoryId, categoryTable.id)).where(eq(productsTable.id,id));
+
+        await this.redisService.set('product-detail-'+id, data, 60);
+
+        return data;
+
     }
 
     async updateProduct(id: number, updates: any) {
@@ -101,6 +120,22 @@ export class ProductsService {
         console.log("productIds service >>> ", productIds);
         
 
+    }
+
+    // Helper function to acquire a distributed lock using Redlock
+    private async acquireLock(lockKey: string, ttl = 10000): Promise<boolean> {
+        const lockValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15); 
+        const acquired = await this.redisService.set(lockKey, lockValue, ttl); 
+      
+        return acquired; // Use the returned boolean value
+      }
+
+    // Helper function to release a distributed lock
+    private async releaseLock(lockKey: string): Promise<void> {
+        const currentLockValue = await this.redisService.get(lockKey); 
+        if (currentLockValue === await this.redisService.get(lockKey)) {
+        await this.redisService.del(lockKey); 
+        }
     }
 
 }
