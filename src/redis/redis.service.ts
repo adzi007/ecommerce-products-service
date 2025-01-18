@@ -13,36 +13,37 @@ export class RedisService {
         });
     }
 
-    // async set(key: string, value: any, expiration?: number) {
-    //     const serializedValue = JSON.stringify(value); 
-    //     if (expiration) {
-    //       await this.client.set(key, serializedValue, 'EX', expiration); 
-    //     } else {
-    //       await this.client.set(key, serializedValue);
-    //     }
-    //   }
+    async set(key: string, value: any, expiration?: number) {
+        const serializedValue = JSON.stringify(value); 
+        if (expiration) {
+          await this.client.set(key, serializedValue, 'EX', expiration); 
+        } else {
+          await this.client.set(key, serializedValue);
+        }
+      }
 
-    async set(key: string, value: any, expiration?: number): Promise<boolean> {
-        try {
-          if (expiration) {
-            await this.client.set(key, value, 'EX', expiration); 
-          } else {
-            await this.client.set(key, value);
-          }
-          return true; // Return true if the set operation was successful
-        } catch (error) {
-          console.error('Error setting value in Redis:', error);
-          return false; // Return false if an error occurred
-        }
-      }
+    // async set(key: string, value: any, expiration?: number): Promise<boolean> {
+    //   try {
+    //     if (expiration) {
+    //       await this.client.set(key, value, 'EX', expiration); 
+    //     } else {
+    //       await this.client.set(key, value);
+    //     }
+    //     return true; // Return true if the set operation was successful
+    //   } catch (error) {
+    //     console.error('Error setting value in Redis:', error);
+    //     return false; // Return false if an error occurred
+    //   }
+    // }
+
     
-      async get(key: string): Promise<any> {
-        const data = await this.client.get(key);
-        if (data) {
-          return JSON.parse(data);
-        }
-        return null;
+    async get(key: string): Promise<any> {
+      const data = await this.client.get(key);
+      if (data) {
+        return JSON.parse(data);
       }
+      return null;
+    }
     
 
     async mset(keysAndValues: Record<string, string>) {
@@ -65,7 +66,31 @@ export class RedisService {
         await this.client.disconnect();
     }
 
-    // async coba() {
-    //     await this.client.multi()
-    // }
+    async setLock(key: string, value: string, ttl: number): Promise<boolean> {
+      try {
+        const result = await this.client.set(key, value, 'EX', ttl, 'NX'); 
+        return result === 'OK'; // 'NX' option returns 'OK' on success
+      } catch (error) {
+        console.error('Error setting lock:', error);
+        return false;
+      }
+    }
+  
+    async releaseLock(key: string, value: string): Promise<boolean> {
+      const script = `
+        if redis.call('get', KEYS[1]) == ARGV[1] then
+          return redis.call('del', KEYS[1])
+        else
+          return 0
+        end
+      `;
+  
+      try {
+        const result = await this.client.eval(script, 1, key, value); 
+        return result === 1; 
+      } catch (error) {
+        console.error('Error releasing lock:', error);
+        return false;
+      }
+    }
 }

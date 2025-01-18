@@ -1,11 +1,10 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { CreateProductPipe } from 'src/pipes/create-product.pipe';
 import { Roles } from 'src/decorators/roles.decorator';
 import { AuthorizationGuard } from 'src/guards/authorization.guard';
-import { ValidateStockDto } from './dto/validate-stock.dto';
-import { ValidateStockPipe } from 'src/pipes/validate-stock.pipe';
+import { OrderDto } from './dto/validate-stock.dto';
 // import { Public, RoleMatchingMode, Roles } from 'nest-keycloak-connect';
 
 
@@ -20,6 +19,18 @@ export class ProductsController {
     @UsePipes(CreateProductPipe)
     async createProduct(@Body(ValidationPipe) product: CreateProductDto) {
          return this.productsService.createProduct(product);
+    }
+
+    @Post("/validate-order")
+    async validateOrder(@Body() orderProducts: OrderDto){
+
+        // return this.productsService.validateStockProducts(orderProducts)
+
+        try {
+            return await this.productsService.validateStockProducts(orderProducts);
+          } catch (error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+          }
     }
 
     @Get()
@@ -50,14 +61,4 @@ export class ProductsController {
         return this.productsService.deleteProduct(id);
     }
 
-    @Post("/validate-stock")
-    async validateStockProducts(@Body('productIds', ValidateStockPipe) productIds: number[] ) {
-
-        console.log("productsIds controller >>> ", productIds);
-        console.log("productsIds controller length >>> ", productIds.length);
-        
-        return this.productsService.validateStockProducts(productIds)
-    }
-
-    
 }

@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { db } from 'src/db';
 import { productsTable, categoryTable } from 'drizzle/drizzle.schemas';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { CreateProductDto } from './dto/create-product.dto';
-import { ValidateStockDto } from './dto/validate-stock.dto';
+// import { ValidateStockDto } from './dto/validate-stock.dto';
 import { RedisService } from 'src/redis/redis.service';
+import { OrderDto } from './dto/validate-stock.dto';
 
 type ProductType = "consumable" | "non_consumable";
 
@@ -79,6 +80,7 @@ export class ProductsService {
 
         if (cachedData) {
             // console.log('Data retrieved from Redis');
+            // console.log("cachedData >>> ", cachedData);
             return cachedData;
         }
 
@@ -115,27 +117,141 @@ export class ProductsService {
         return await db.delete(productsTable).where(eq(productsTable.id,id))
     }
 
-    async validateStockProducts (productIds: number[]) {
+    async validateStockProducts (orderRequests: OrderDto) {
 
-        console.log("productIds service >>> ", productIds);
+        let productsIds = []
+        orderRequests.productsOrderList.map(item => productsIds.push(item.id))
+
+        // const products = await db.select({ id: productsTable.id, stock: productsTable.stock }).from(productsTable).where(inArray(productsTable.id, productsIds ))
+
+        let products;
+
+        try {
+
+            products = await db.select({ id: productsTable.id, stock: productsTable.stock }).from(productsTable).where(inArray(productsTable.id, productsIds));
+
+            // Get the IDs of the retrieved products
+            const retrievedProductIds = products.map(product => product.id);
+
+            // Identify missing IDs
+            const missingProductIds = productsIds.filter(id => !retrievedProductIds.includes(id));
+
+            if (missingProductIds.length > 0) {
+                console.error("Missing product IDs:", missingProductIds);
+                throw new Error(`Some products are missing from the database: ${missingProductIds.join(", ")}`);
+            }
+
+        } catch (error) {
+            
+            console.error("Database query error:", error.message);
+            throw new Error("Failed to retrieve products from the database. Please try again later.");
+        }
+
+        // console.log("products >>>> ", products);
         
 
+        try {
+
+            this.validateStock(orderRequests.productsOrderList, products);
+            
+            console.log("All products are available in sufficient quantity.");
+
+        } catch (errors) {
+            console.error("Errors occurred:", errors);
+        }
+
+        return "test validate order"
+        
+        // const lockKey = 'stock_update_lock'; 
+
+        // try {
+        //     // 1. Acquire a distributed lock (e.g., using Redlock)
+            
+        //     const lockAcquired = await this.acquireLock(lockKey); 
+      
+        //     if (!lockAcquired) {
+        //       throw new Error('Could not acquire lock. Please try again later.');
+        //     }
+      
+        //     // 2. Check and update stock within the lock
+
+                        
+      
+        //     // 3. Release the lock
+        //     await this.releaseLock(lockKey); 
+      
+        //     return 'Stock updated successfully';
+      
+        // } catch (error) {
+        //     // Release the lock in case of any error
+        //     await this.releaseLock(lockKey); 
+        //     throw error; 
+        // }
+        
     }
 
-    // Helper function to acquire a distributed lock using Redlock
-    private async acquireLock(lockKey: string, ttl = 10000): Promise<boolean> {
-        const lockValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15); 
-        const acquired = await this.redisService.set(lockKey, lockValue, ttl); 
-      
-        return acquired; // Use the returned boolean value
-      }
+    // Function to validate stock availability
+    private validateStock(orderRequest: { id: number; qty: number }[], productFromDb: { id: number; stock: number }[]): void {
+        const errors: { status: number; id: number; availability: number; message: string }[] = [];
 
-    // Helper function to release a distributed lock
-    private async releaseLock(lockKey: string): Promise<void> {
-        const currentLockValue = await this.redisService.get(lockKey); 
-        if (currentLockValue === await this.redisService.get(lockKey)) {
-        await this.redisService.del(lockKey); 
+        for (const order of orderRequest) {
+          const product = productFromDb.find(p => p.id === order.id);
+          
+          if (!product) {
+            // throw new Error(`Product with ID ${order.id} not found in the database.`);
+            errors.push({
+                status: 404,
+                id: order.id,
+                availability: 0,
+                message: `Product with ID ${order.id} not found in the database.`
+            });
+          }
+      
+          if (order.qty > product.stock) {
+            // throw new Error(`Product with ID ${order.id} does not have enough stock. Requested: ${order.qty}, Available: ${product.stock}`);
+            errors.push({
+                status: 400,
+                id: order.id,
+                availability: product.stock,
+                message: `Insufficient stock for product ID ${order.id}. Requested: ${order.qty}, Available: ${product.stock}`
+            });
+          }
+        }
+
+        if (errors.length > 0) {
+            throw errors;
         }
     }
+
+    private async acquireLock(lockKey: string, ttl = 10000, retries = 3, retryDelay = 500): Promise<boolean> {
+        let acquired = false;
+        let attempt = 0;
+      
+        while (attempt < retries && !acquired) {
+          const lockValue = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15); 
+          acquired = await this.redisService.setLock(lockKey, lockValue, ttl); 
+      
+          if (!acquired) {
+            await new Promise(resolve => setTimeout(resolve, retryDelay)); // Wait before retrying
+            attempt++;
+          }
+        }
+        return acquired;
+    }
+
+    // Helper function to release a distributed lock
+
+    private async releaseLock(lockKey: string): Promise<void> {
+        const currentLockValue = await this.redisService.get(lockKey); 
+
+        if (currentLockValue === await this.redisService.get(lockKey)) {
+          await this.redisService.del(lockKey); 
+        }
+    }
+
+    // private async releaseLock(lockKey: string): Promise<boolean> {
+    //     const currentLockValue = await this.redisService.get(lockKey); 
+    //     return await this.redisService.releaseLock(lockKey, currentLockValue); 
+    // }
 
 }
