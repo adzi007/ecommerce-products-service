@@ -5,7 +5,6 @@ import { CreateProductPipe } from 'src/pipes/create-product.pipe';
 import { Roles } from 'src/decorators/roles.decorator';
 import { AuthorizationGuard } from 'src/guards/authorization.guard';
 import { OrderDto } from './dto/validate-stock.dto';
-// import { Public, RoleMatchingMode, Roles } from 'nest-keycloak-connect';
 
 
 @Controller('products')
@@ -24,13 +23,14 @@ export class ProductsController {
     @Post("/validate-order")
     async validateOrder(@Body() orderProducts: OrderDto){
 
-        // return this.productsService.validateStockProducts(orderProducts)
-
         try {
+            
             return await this.productsService.validateStockProducts(orderProducts);
-          } catch (error) {
+            
+        } catch (error) {            
+
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-          }
+        }
     }
 
     @Get()
@@ -44,8 +44,6 @@ export class ProductsController {
     @Get(":id")
     async getProductById(@Param("id") id: number) {
         const productById = await this.productsService.getProductById(id)
-        // console.log("productById >>> ", productById[0]);
-        // console.log("productById type >>> ", typeof productById);
         return productById[0];
     }
 

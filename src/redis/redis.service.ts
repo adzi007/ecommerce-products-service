@@ -14,33 +14,25 @@ export class RedisService {
     }
 
     async set(key: string, value: any, expiration?: number) {
-        const serializedValue = JSON.stringify(value); 
-        if (expiration) {
-          await this.client.set(key, serializedValue, 'EX', expiration); 
-        } else {
-          await this.client.set(key, serializedValue);
-        }
+      // const serializedValue = JSON.stringify(value); 
+      const serializedValue = typeof value === 'string' ? value : JSON.stringify(value);
+      if (expiration) {
+        await this.client.set(key, serializedValue, 'EX', expiration); 
+      } else {
+        await this.client.set(key, serializedValue);
       }
-
-    // async set(key: string, value: any, expiration?: number): Promise<boolean> {
-    //   try {
-    //     if (expiration) {
-    //       await this.client.set(key, value, 'EX', expiration); 
-    //     } else {
-    //       await this.client.set(key, value);
-    //     }
-    //     return true; // Return true if the set operation was successful
-    //   } catch (error) {
-    //     console.error('Error setting value in Redis:', error);
-    //     return false; // Return false if an error occurred
-    //   }
-    // }
-
+    }
     
     async get(key: string): Promise<any> {
+
       const data = await this.client.get(key);
       if (data) {
-        return JSON.parse(data);
+        try {
+          return JSON.parse(data);
+        } catch {
+          // If parsing fails, return the raw string
+          return data;
+        }
       }
       return null;
     }
@@ -49,7 +41,7 @@ export class RedisService {
     async mset(keysAndValues: Record<string, string>) {
         const keys = Object.keys(keysAndValues);
         const values = Object.values(keysAndValues);
-        const args: (string | number | Buffer)[] = [...keys, ...values]; // Combine keys and values into a single array
+        const args: (string | number | Buffer)[] = [...keys, ...values];
     
         await this.client.mset(...args); 
     }
@@ -68,7 +60,7 @@ export class RedisService {
 
     async setLock(key: string, value: string, ttl: number): Promise<boolean> {
       try {
-        const result = await this.client.set(key, value, 'EX', ttl, 'NX'); 
+        const result = await this.client.set(key, value, 'EX', ttl, 'NX');
         return result === 'OK'; // 'NX' option returns 'OK' on success
       } catch (error) {
         console.error('Error setting lock:', error);

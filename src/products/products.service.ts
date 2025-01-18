@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { db } from 'src/db';
 import { productsTable, categoryTable } from 'drizzle/drizzle.schemas';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { CreateProductDto } from './dto/create-product.dto';
 // import { ValidateStockDto } from './dto/validate-stock.dto';
 import { RedisService } from 'src/redis/redis.service';
@@ -118,76 +118,82 @@ export class ProductsService {
     }
 
     async validateStockProducts (orderRequests: OrderDto) {
-
-        let productsIds = []
-        orderRequests.productsOrderList.map(item => productsIds.push(item.id))
-
-        // const products = await db.select({ id: productsTable.id, stock: productsTable.stock }).from(productsTable).where(inArray(productsTable.id, productsIds ))
-
-        let products;
+        
+        const lockKey = 'stock_update_lock'; 
 
         try {
-
-            products = await db.select({ id: productsTable.id, stock: productsTable.stock }).from(productsTable).where(inArray(productsTable.id, productsIds));
-
-            // Get the IDs of the retrieved products
-            const retrievedProductIds = products.map(product => product.id);
-
-            // Identify missing IDs
-            const missingProductIds = productsIds.filter(id => !retrievedProductIds.includes(id));
-
-            if (missingProductIds.length > 0) {
-                console.error("Missing product IDs:", missingProductIds);
-                throw new Error(`Some products are missing from the database: ${missingProductIds.join(", ")}`);
+            // 1. Acquire a distributed lock (e.g., using Redlock)
+            
+            const lockAcquired = await this.acquireLock(lockKey); 
+      
+            if (!lockAcquired) {
+              throw new Error('Could not acquire lock. Please try again later.');
             }
+      
+            // 2. Check and update stock within the lock
 
-        } catch (error) {
-            
-            console.error("Database query error:", error.message);
-            throw new Error("Failed to retrieve products from the database. Please try again later.");
-        }
+            const productIds = orderRequests.productsOrderList.map((item) => item.id);
 
-        // console.log("products >>>> ", products);
-        
+            // Fetch products from the database
+            const products = await this.getProductsByIds(productIds);
 
-        try {
-
+            // Validate stock availability
             this.validateStock(orderRequests.productsOrderList, products);
-            
-            console.log("All products are available in sufficient quantity.");
 
-        } catch (errors) {
-            console.error("Errors occurred:", errors);
+            // Decrease stock using a transaction
+            await this.decreaseProductStock(orderRequests.productsOrderList);          
+      
+            // 3. Release the lock
+            await this.releaseLock(lockKey); 
+      
+            
+      
+        } catch (error) {
+            // Release the lock in case of any error
+            await this.releaseLock(lockKey); 
+            throw error; 
         }
 
-        return "test validate order"
+        return 'Stock updated successfully';
         
-        // const lockKey = 'stock_update_lock'; 
+    }
 
-        // try {
-        //     // 1. Acquire a distributed lock (e.g., using Redlock)
-            
-        //     const lockAcquired = await this.acquireLock(lockKey); 
+    private async getProductsByIds(productIds: number[]): Promise<any[]> {
+        try {
+          const products = await db
+            .select({ id: productsTable.id, stock: productsTable.stock })
+            .from(productsTable)
+            .where(inArray(productsTable.id, productIds));
       
-        //     if (!lockAcquired) {
-        //       throw new Error('Could not acquire lock. Please try again later.');
-        //     }
+          // Check for missing products
+          const retrievedProductIds = products.map((product) => product.id);
+          const missingProductIds = productIds.filter((id) => !retrievedProductIds.includes(id));
       
-        //     // 2. Check and update stock within the lock
+          if (missingProductIds.length > 0) {
+            throw new Error(`Some products are missing from the database: ${missingProductIds.join(", ")}`);
+          }
+      
+          return products;
+        } catch (error) {
+          console.error("Database query error:", error.message);
+          throw new Error("Failed to retrieve products from the database. Please try again later.");
+        }
+    }
 
-                        
-      
-        //     // 3. Release the lock
-        //     await this.releaseLock(lockKey); 
-      
-        //     return 'Stock updated successfully';
-      
-        // } catch (error) {
-        //     // Release the lock in case of any error
-        //     await this.releaseLock(lockKey); 
-        //     throw error; 
-        // }
-        
+    private async decreaseProductStock(productsOrderList: { id: number; qty: number }[]): Promise<void> {
+        await db.transaction(async (trx) => {
+          try {
+            for (const order of productsOrderList) {
+              await trx
+                .update(productsTable)
+                .set({ stock: sql`${productsTable.stock} - ${order.qty}` })
+                .where(eq(productsTable.id, order.id));
+            }
+          } catch (error) {
+            console.error("Error updating stock in transaction:", error.message);
+            throw new Error("Failed to update product stock. Transaction rolled back.");
+          }
+        });
     }
 
     // Function to validate stock availability
@@ -223,7 +229,7 @@ export class ProductsService {
         }
     }
 
-    private async acquireLock(lockKey: string, ttl = 10000, retries = 3, retryDelay = 500): Promise<boolean> {
+    private async acquireLock(lockKey: string, ttl = 2, retries = 3, retryDelay = 500): Promise<boolean> {
         let acquired = false;
         let attempt = 0;
       
