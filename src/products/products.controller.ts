@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { CreateProductPipe } from 'src/pipes/create-product.pipe';
 import { Roles } from 'src/decorators/roles.decorator';
 import { AuthorizationGuard } from 'src/guards/authorization.guard';
 import { OrderDto } from './dto/validate-stock.dto';
+import { CartProductInfoDto } from './dto/cart-product-info.dto';
 
 
 @Controller('products')
@@ -57,6 +58,15 @@ export class ProductsController {
     @Roles('admin') // Only accessible to admin users
     async deleteProduct(@Param("id") id: number) {
         return this.productsService.deleteProduct(id);
+    }
+
+    @Post("/cart-product")
+    @HttpCode(200)
+    async getCartProductInfo(@Body() cartProductRequest: CartProductInfoDto){
+
+       return await this.productsService.getCartProduct(cartProductRequest)
+        
+
     }
 
 }

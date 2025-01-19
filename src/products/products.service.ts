@@ -6,6 +6,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 // import { ValidateStockDto } from './dto/validate-stock.dto';
 import { RedisService } from 'src/redis/redis.service';
 import { OrderDto } from './dto/validate-stock.dto';
+import { CartProductInfoDto } from './dto/cart-product-info.dto';
 
 type ProductType = "consumable" | "non_consumable";
 
@@ -259,5 +260,28 @@ export class ProductsService {
     //     const currentLockValue = await this.redisService.get(lockKey); 
     //     return await this.redisService.releaseLock(lockKey, currentLockValue); 
     // }
+
+    async getCartProduct(cartProductInfo: CartProductInfoDto) { 
+ 
+      const data = await db.select({ 
+        id: productsTable.id, 
+        name: productsTable.name,
+        slug: productsTable.slug,
+        price: productsTable.priceSell,
+        stock: productsTable.stock,
+        category: {
+          name: categoryTable.name,
+          slug: categoryTable.slug
+        }
+      
+      }).from(productsTable)
+      .leftJoin(categoryTable, eq(productsTable.categoryId, categoryTable.id))
+      .where(inArray(productsTable.id, cartProductInfo.productsList))    
+
+
+      return data
+
+
+    }
 
 }

@@ -16,8 +16,11 @@ services:
       - DB_USER=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=6379
     depends_on:
       - db
+      - redis
     volumes:
       - .:/app
       - /app/node_modules
@@ -39,6 +42,19 @@ services:
       - db_dataproducts:/var/lib/mysql
     env_file:
       - .env 
+  
+  redis:
+    image: redis:7
+    container_name: ecommerce-redis
+    networks:
+      - ecommerce-network
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - redis_data:/data
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    restart: always
 
 networks:
   ecommerce-network:
@@ -46,3 +62,4 @@ networks:
 
 volumes:
   db_dataproducts:
+  redis_data:
