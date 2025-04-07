@@ -11,7 +11,7 @@ export class CategoryService {
         // return await db.insert(categoryTable).values(category).$returningId();
         return await db.insert(categoryTable).values({
             name:category.name,
-            slug:category.slug
+            slug:category.slug,
         }).$returningId();
     }
 

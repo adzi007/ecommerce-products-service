@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { mysqlTable, int, varchar, timestamp, mysqlEnum, time } from "drizzle-orm/mysql-core";
 
 export const categoryTable = mysqlTable("category", {
@@ -7,7 +7,9 @@ export const categoryTable = mysqlTable("category", {
     slug: varchar("slug", { length: 255 }).notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
-    deletedAt: time("deleted_at"),
+    // deletedAt: time("deleted_at"),
+    deletedAt: timestamp("deleted_at").default(sql`null`).$type<Date | null>()
+
 });
 
 export const productsTable = mysqlTable("products", {

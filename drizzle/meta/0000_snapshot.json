@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "ec80b9c1-b6da-4eec-843a-7220fd8a6bfd",
+  "id": "c6364be1-00cb-4662-9040-de8d5d50d910",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "category": {
@@ -47,10 +47,11 @@
         },
         "deleted_at": {
           "name": "deleted_at",
-          "type": "time",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "null"
         }
       },
       "indexes": {},

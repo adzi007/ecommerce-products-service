@@ -21,6 +21,9 @@ FROM oven/bun:latest
 
 WORKDIR /app
 
+# Install MySQL client
+RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
+
 # Copy only the necessary files from the builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules

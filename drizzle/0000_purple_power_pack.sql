@@ -4,7 +4,7 @@ CREATE TABLE `category` (
 	`slug` varchar(255) NOT NULL,
 	`created_at` timestamp DEFAULT (now()),
 	`updated_at` timestamp DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
-	`deleted_at` time,
+	`deleted_at` timestamp DEFAULT null,
 	CONSTRAINT `category_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
