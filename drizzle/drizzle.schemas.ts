@@ -25,7 +25,8 @@ export const productsTable = mysqlTable("products", {
     categoryId: int("category_id").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-    deletedAt: time("deleted_at"),
+    // deletedAt: time("deleted_at"),
+    deletedAt: time("deleted_at").default(sql`null`).$type<Date | null>()
 });
 
 export const productsTableRelation = relations(categoryTable, ({ one }) => ({
