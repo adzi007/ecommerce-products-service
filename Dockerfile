@@ -16,6 +16,8 @@ COPY . .
 # Build the application
 RUN bun run build
 
+RUN ls -R /app/dist || echo "Build failed or dist not found"
+
 # Start production image
 FROM oven/bun:latest
 
