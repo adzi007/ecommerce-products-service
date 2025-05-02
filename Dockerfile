@@ -16,7 +16,7 @@ COPY . .
 # Build the application
 RUN bun run build
 
-RUN ls -R /app/dist || echo "Build failed or dist not found"
+# RUN ls -R /app/dist || echo "Build failed or dist not found"
 
 # Start production image
 FROM oven/bun:latest
@@ -25,6 +25,8 @@ WORKDIR /app
 
 # Install MySQL client
 RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
+
+RUN ls -R /app/dist || echo "Build failed or dist not found"
 
 # Copy only the necessary files from the builder
 COPY --from=builder /app/dist ./dist
