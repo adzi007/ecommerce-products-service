@@ -2,6 +2,8 @@
 # Use Bun for building the application
 FROM oven/bun:latest as builder
 
+RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy package files
@@ -19,23 +21,23 @@ RUN bun run build
 # RUN ls -R /app/dist || echo "Build failed or dist not found"
 
 # Start production image
-FROM oven/bun:latest
+# FROM oven/bun:latest
 
-WORKDIR /app
+# WORKDIR /
 
-# Install MySQL client
-RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
+# # Install MySQL client
+# RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib/apt/lists/*
 
-RUN ls -R /app/dist || echo "Build failed or dist not found"
+# # RUN ls -R /app/dist || echo "Build failed or dist not found"
 
-# Copy only the necessary files from the builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/bun.lockb ./bun.lockb
+# # Copy only the necessary files from the builder
+# COPY --from=builder /app/dist ./dist
+# COPY --from=builder /app/node_modules ./node_modules
+# COPY --from=builder /app/package.json ./package.json
+# COPY --from=builder /app/bun.lockb ./bun.lockb
 
-# Ensure dependencies are installed in the production container
-RUN bun install --production
+# # Ensure dependencies are installed in the production container
+# RUN bun install --production
 
 EXPOSE 3000
 
