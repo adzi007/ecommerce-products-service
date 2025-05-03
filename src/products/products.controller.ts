@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
-import { CreateProductPipe } from 'src/pipes/create-product.pipe';
-import { Roles } from 'src/decorators/roles.decorator';
-import { AuthorizationGuard } from 'src/guards/authorization.guard';
+import { CreateProductPipe } from '../pipes/create-product.pipe';
+import { Roles } from '../decorators/roles.decorator';
+import { AuthorizationGuard } from '../guards/authorization.guard';
 import { OrderDto } from './dto/validate-stock.dto';
 import { CartProductInfoDto } from './dto/cart-product-info.dto';
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { db } from 'src/db';
-import { categoryTable, productsTable } from 'drizzle/drizzle.schemas';
+import { db } from '../db';
+import { categoryTable, productsTable } from '../../drizzle/drizzle.schemas';
 import { eq, sql } from 'drizzle-orm';
 import { json } from 'drizzle-orm/mysql-core';
 
