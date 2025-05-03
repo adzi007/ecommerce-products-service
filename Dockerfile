@@ -16,6 +16,8 @@ COPY . .
 # Build the application
 RUN bun run build
 
+# Verify build output
+RUN ls -la /app/dist
 
 # Start production image
 FROM oven/bun:latest
@@ -31,10 +33,13 @@ RUN apt-get update && apt-get install -y default-mysql-client && rm -rf /var/lib
 # COPY --from=builder /app/package.json ./package.json
 # COPY --from=builder /app/bun.lockb ./bun.lockb
 
-COPY --from=builder /app/dist /app/dist
-COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/package.json /app/package.json
 COPY --from=builder /app/bun.lockb /app/bun.lockb
+COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/node_modules /app/node_modules
+
+# Verify copied files
+RUN ls -la /app/dist
 
 # Ensure dependencies are installed in the production container
 RUN bun install --production
