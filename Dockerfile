@@ -1,6 +1,6 @@
 # Dockerfile
 # Use Bun for building the application
-FROM oven/bun:latest as builder
+FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
