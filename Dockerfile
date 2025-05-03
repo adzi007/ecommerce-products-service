@@ -25,4 +25,4 @@ RUN bun install --production
 EXPOSE 3000
 # CMD ["bun", "dist/main.js"]  # Changed from dist/src/main.js
 
-CMD sh -c "bun dist/main.js || tail -f /dev/null"
+CMD sh -c "bun dist/src/main.js || tail -f /dev/null"
