@@ -23,4 +23,6 @@ COPY --from=builder /app/bun.lockb /app/bun.lockb
 
 RUN bun install --production
 EXPOSE 3000
-CMD ["bun", "dist/main.js"]  # Changed from dist/src/main.js
+# CMD ["bun", "dist/main.js"]  # Changed from dist/src/main.js
+
+CMD sh -c "bun dist/main.js || tail -f /dev/null"
