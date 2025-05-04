@@ -65,6 +65,7 @@ export class ProductsService {
 
         return {
             data: products,
+            pesan: "success get products data",
             pagination: {
                 total: totalProduct,
                 page,
