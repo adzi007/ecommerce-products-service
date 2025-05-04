@@ -7,7 +7,9 @@ deploy_production:
     - main
   script:
     - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+    - eval "$(ssh-agent -s)"
+    - ssh-add ~/.ssh/id_rsa
+    - ssh-keyscan -p 52173 -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
     - ssh -p 52173 "$DEPLOY_USER@$DEPLOY_HOST" "cd $DEPLOY_PATH && git pull origin main && docker compose up -d --build"
