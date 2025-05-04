@@ -1,12 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { db } from 'src/db';
-import { productsTable, categoryTable } from 'drizzle/drizzle.schemas';
+import { productsTable, categoryTable } from '../../drizzle/drizzle.schemas';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { CreateProductDto } from './dto/create-product.dto';
-// import { ValidateStockDto } from './dto/validate-stock.dto';
-import { RedisService } from 'src/redis/redis.service';
+import { RedisService } from '../redis/redis.service';
 import { OrderDto } from './dto/validate-stock.dto';
 import { CartProductInfoDto } from './dto/cart-product-info.dto';
+import { db } from '../db'; 
 
 type ProductType = "consumable" | "non_consumable";
 

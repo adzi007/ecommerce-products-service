@@ -1,5 +1,6 @@
 # Dockerfile
-FROM oven/bun:latest as builder
+# Use Bun for building the application
+FROM oven/bun:latest AS builder
 
 WORKDIR /app
 COPY package.json bun.lockb ./
@@ -21,8 +22,14 @@ COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/package.json /app/package.json
 COPY --from=builder /app/bun.lockb /app/bun.lockb
 
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+# COPY --from=builder /app/start.js ./start.js
+
+# Ensure dependencies are installed in the production container
 RUN bun install --production
 EXPOSE 3000
 # CMD ["bun", "dist/main.js"]  # Changed from dist/src/main.js
 
-CMD sh -c "bun dist/src/main.js || tail -f /dev/null"
+# Run the application
+CMD ["bun", "dist/src/main.js"]
+# CMD ["bun", "start.js"]
