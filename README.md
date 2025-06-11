@@ -30,7 +30,7 @@ This service uses **Redis** for **locking transactions** to prevent race conditi
 
 ### Prerequisites
 - Docker
-- Go 1.21+
+- Bun
 
 ## Running Locally (Docker)
 
