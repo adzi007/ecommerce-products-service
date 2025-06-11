@@ -72,5 +72,5 @@ docker exec -it ecommerce-products-service /bin/bash
 mysql -h db -u root -p${DB_PASSWORD} ${DB_NAME} < ./drizzle/0000_purple_power_pack.sql
 ```
 ## API Documentation
-<a href="https://www.postman.com/adzi/ecommerce-final/collection/l1ad1r0/nest-products-service-doc" target="_blank">Postman Collections</a>
+<a href="https://www.postman.com/team-ninja-8073/ecommerce-final/overview" target="_blank">Postman Collections</a>
 
